@@ -1,3 +1,9 @@
+# urbanCrowdSim
+Urban crowd simulation using a gpu cluster.
+
+The goal of the project is to simulate realistic urban scenarios with thousands of characters.
+HPC throught a gpu cluster using MPI + CUDA + OpenGL + OSM + Tangram
+
 
 Description:
 
