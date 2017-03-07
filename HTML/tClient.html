@@ -1,7 +1,7 @@
-<!DOCTYPE html>
 <html>
 <head>
   <title>Render to Texture – Tangram</title>
+  <meta charset="utf-8">
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.1/dist/leaflet.css" />
@@ -16,11 +16,15 @@
     <script src="https://unpkg.com/leaflet@1.0.3/dist/leaflet.js"></script>
 
     <!-- Main tangram library -->
-
   <script src="./js/tangram.min.js"></script>
-  <script type="text/javascript" src="./js/bytes.js"></script>
-  <script type="text/javascript" src="./js/peripherals.js"></script>
-   <script type="text/javascript" src="./js/tClient.js"></script>
+  <script type="text/javascript" src="bytes.js"></script>
+  <script type="text/javascript" src="peripherals.js"></script>
+  
+  <script type="text/javascript" src="shaders/vertexShMap.js" id="depthVrtxShdr"></script>
+  <script type="text/javascript" src="shaders/fragmentShMap.js" id="depthFgmtShdr"></script>
+
+
+  <script type="text/javascript" src="tClient.js"></script>
 
 </head>
 
@@ -43,9 +47,10 @@
 				-webkit-transform: scale(1, -1);
 				-o-transform: scale(1, -1);
 				transform: scale(1, -1);"></canvas>
-<canvas id="canvas4" width="512" height="512" style = "-moz-transform: scale(-1, 1);
+<canvas id="canvas4" width="512" height="512">
+<!---canvas id="canvas4" width="512" height="512" style = "-moz-transform: scale(-1, 1);
 				-webkit-transform: scale(1, -1);
 				-o-transform: scale(1, -1);
-				transform: scale(1, -1);"></canvas>
+				transform: scale(1, -1);"---></canvas>
 </body>
 </html>

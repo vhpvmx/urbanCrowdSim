@@ -38,6 +38,27 @@ sources:
         max_zoom: 16
 
 layers:
+    earth:
+        data: { source: osm }
+        draw:
+            polygons:
+                order: function() { return feature.sort_rank; }
+                color: '#ddeeee'
+
+    landuse:
+        data: { source: osm }
+        draw:
+            polygons:
+                order: function() { return feature.sort_rank; }
+                color: '#aaffaa'
+
+    water:
+        data: { source: osm }
+        draw:
+            polygons:
+                order: function() { return feature.sort_rank; }
+                color: '#003366'
+
     roads:
         data: { source: osm }
         filter:
@@ -45,7 +66,7 @@ layers:
         draw:
             lines:
                 order: function() { return feature.sort_rank; }
-                color: blue
+                color: gray
                 width: 8
                 cap: round
         highway:
@@ -54,18 +75,18 @@ layers:
             draw:
                 lines:
                     order: function() { return feature.sort_rank; }
-                    color: '#0006ff'
+                    color: '#cc6666'
                     width: 12
                     outline:
-                        color: blue
-                        width: 2.5
+                        color: grey
+                        width: 1.5
         minor_road:
             filter:
                 kind: minor_road
             draw:
                 lines:
                     order: function() { return feature.sort_rank; }
-                    color: blue
+                    color: lightgrey
                     width: 5
 
     buildings:
