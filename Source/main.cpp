@@ -36,6 +36,7 @@
 broadcast_server 	_server_;
 cMouseHandler		*mouseHandler = 0;
 cKeyboardHandler	*keyboardHandler = 0;
+cFrameClientHandler* frmClntHndlr = nullptr;
 
 
 using namespace std;
@@ -76,6 +77,8 @@ ShaderInfo		screenComposition[] = {
 	{ GL_FRAGMENT_SHADER,	"shaders/screen_composition.frag" },
 	{ GL_NONE,				NULL }
 };
+
+int wh = WIN_WIDTH * WIN_HEIGHT* 4;
 //
 //=======================================================================================
 //
@@ -100,25 +103,18 @@ void display(RenderContext *rcx)
 	{
 
 
-		if(pid<np-1){
-			// Reading color and depth information
-			glReadBuffer ( GL_BACK );
-			glReadPixels ( 0, 0, WIN_WIDTH, WIN_HEIGHT, GL_RGBA, GL_FLOAT, (myScreenType*)colorPixels);
-			glReadPixels ( 0, 0, WIN_WIDTH, WIN_HEIGHT, GL_DEPTH_COMPONENT, GL_FLOAT, depthPixels );
-			// Storing depth into color pixels
+	// Reading color and depth information
+	glReadBuffer ( GL_BACK );
+	glReadPixels ( 0, 0, WIN_WIDTH, WIN_HEIGHT, GL_RGBA, GL_FLOAT, (myScreenType*)colorPixels);
+	glReadPixels ( 0, 0, WIN_WIDTH, WIN_HEIGHT, GL_DEPTH_COMPONENT, GL_FLOAT, depthPixels );
+	// Storing depth into color pixels
 
-			ptr = (myScreenType*)colorPixels;
+	ptr = (myScreenType*)colorPixels;
 
-			for (i=0, j=0;i<WIN_WIDTH*WIN_HEIGHT*4;i+=4,j++)
-					{
-						ptr[i+3] = depthPixels[j];
-					}
-		}
-		else{
-
-			ptr = _server_.getFrmCltHndlr()->getFrameBufferMyScTyp();
-
-		}
+	for (i=0, j=0;i<WIN_WIDTH*WIN_HEIGHT*4;i+=4,j++)
+			{
+				ptr[i+3] = depthPixels[j];
+			}
 	}
 
 	if (rcx->windowless)
@@ -139,7 +135,8 @@ void display_master (RenderContext *rcx)
 	fboMaster->Bind();
 		glDrawBuffer (GL_COLOR_ATTACHMENT0_EXT);
 		glClear			( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
-		for (i=0;i<np-1;i++)
+		//for (i=0;i<np-1;i++)
+		for (i=0;i<np;i++)
 		{
 			glUseProgram	( screenCompositionShader );
 				model->draw(GL_TEXTURE_2D, screenTexIds[i]);
@@ -169,9 +166,10 @@ void display_master (RenderContext *rcx)
 //
 //=======================================================================================
 //
-void sendReceiveFrames 		()
+void sendReceiveFrames()
 {
-	int i;
+	int i,j;
+	myScreenType* ptr;
 
 	if (pid != 0)
 	{
@@ -186,7 +184,13 @@ void sendReceiveFrames 		()
 
 //			printf ("Np: %d, Character culled: %d, Total Chars: %d\n", i-1, culling[0], culling[1]);
 		}
-//		printf ("\n\n");
+
+		ptr = _server_.getFrmClntHndler()->getFrameBufferMyScTyp();
+		//_server_.getFrmClntHndler()->printInfo();
+		for(j=0;j<wh;++j)
+			*(colorPixels[i]+j)= ptr[j];
+
+		//		printf ("\n\n");
 //		for (i=64;i<128*4;i+=4)
 //		{
 //			printf ("[%d, %d, %d, %d]\t", colorPixels[0][i], colorPixels[0][i+1], colorPixels[0][i+2], colorPixels[0][i+3]);
@@ -202,7 +206,8 @@ void uploadScreenTextures () // Target: screen color or depth
 {
 	int i;
 
-	for (i=0;i<np-1;i++)
+	//for (i=0;i<np-1;i++)
+	for (i=0;i<np;i++)
 	{
 		//cout << " screenTexIds " << screenTexIds[i] << " np " << np << endl;
 		glTextureImage2DEXT (screenTexIds[i], GL_TEXTURE_2D, 0, GL_RGBA32F,
@@ -392,7 +397,8 @@ void freeAll_master ()
 	*/
 
 	int i;
-	for (i=0;i<np-1;i++)
+	//for (i=0;i<np-1;i++)
+	for (i=0;i<np;i++)
 	{
 		FREE_ARRAY(colorPixels[i]);
 	}
@@ -401,6 +407,7 @@ void freeAll_master ()
 	FREE_MEMORY ( fboMaster 		);
 	FREE_MEMORY	( mouseHandler		);
 	FREE_MEMORY	( keyboardHandler	);
+	FREE_MEMORY ( frmClntHndlr		);
 
 }
 //
@@ -414,7 +421,8 @@ void init_master ()
 	glEnable			( GL_DEPTH_TEST );
 
 	glGenTextures 		(np, screenTexIds);
-	for ( i=0; i<np-1; i++)
+	//for ( i=0; i<np-1; i++)
+	for ( i=0; i<np; i++)
 	{
 		glBindTexture(GL_TEXTURE_2D, screenTexIds[i]);
 			glTexParameterf	( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -490,7 +498,7 @@ pthread_t			threads;
 
 void *webSocketServer (void *threadArgs)
 {
-	cout << "launching server at port " << SERVER_PORT << endl;
+	cout << "launching server at port " << SERVER_PORT << " in process with id:"<<pid<< endl;
     _server_.run(SERVER_PORT);
 
     cerr << "Exiting thread!" << endl;
@@ -503,9 +511,11 @@ void launchWebSocketServer ()
 {
 	mouseHandler	= new cMouseHandler 	();
 	keyboardHandler = new cKeyboardHandler 	();
+	frmClntHndlr	= new cFrameClientHandler(WIN_WIDTH,WIN_HEIGHT);
 
 	_server_.setMouseHandler 	( mouseHandler		);
 	_server_.setKeyboardHandler	( keyboardHandler 	);
+	_server_.setFrmClntHandler	( frmClntHndlr		);
 
 	int rc = pthread_create( &threads, NULL, webSocketServer, NULL );
 	if( rc )
@@ -514,7 +524,7 @@ void launchWebSocketServer ()
 
 		FREE_MEMORY		( mouseHandler				);
 		FREE_MEMORY		( keyboardHandler			);
-
+		FREE_MEMORY		( frmClntHndlr				);
 	    exit( 1 );
 	}
 }
@@ -524,15 +534,17 @@ void launchWebSocketServer ()
 void initScreenArraysMaster ()
 {
 	int i;
-	int wh = WIN_WIDTH * WIN_HEIGHT* 4;
 
 	// initializing arrays that will store each node screen
-	colorPixels = new myScreenType *[np-1]; // a screenBuffer per slave
-	for (i=0;i<np-1;i++)
+	colorPixels = new myScreenType *[np]; // a screenBuffer per slave and one for the background sent by the browse client
+	//colorPixels = new myScreenType *[np-1]; // a screenBuffer per slave
+	//for (i=0;i<np-1;i++)
+	for (i=0;i<np;i++)
 	{
 		colorPixels[i] = new myScreenType [ wh ];
 	}
 	pixelSizeMsg = wh * 4 * sizeof (myScreenType );
+	//screenTexIds = new unsigned int [np-1];
 	screenTexIds = new unsigned int [np];
 
 //	for (i = 0; i< np; i++)
@@ -580,7 +592,7 @@ void runCompositeWindowless (int argc, char** argv)
 	cout<< "step 1"<<endl;
 	initEarlyGLXfnPointers	(	);
 	cout<< "step 2"<<endl;
-	CreateWindowless( &rcx, ":1.0", 4, 2 );
+	CreateWindowless( &rcx, ":0.0", 4, 2 );
 	cout<< "step 3"<<endl;
 	int glew_status = glewInit();
 	if( glew_status != GLEW_OK )
@@ -616,9 +628,9 @@ void runRenderingWindowless (int argc, char** argv)
 	initEarlyGLXfnPointers();
 
 	if (pid%2)
-		CreateWindowless	(&rcx, ":1.1", 4, 2);
+		CreateWindowless	(&rcx, ":0.1", 4, 2);
 	else
-		CreateWindowless	(&rcx, ":1.0", 4, 2);
+		CreateWindowless	(&rcx, ":0.0", 4, 2);
 
 	int glew_status = glewInit();
 	if( glew_status != GLEW_OK )
@@ -655,13 +667,13 @@ int main(int argc, char** argv)
 
 	if ( pid == 0 ) // master node
 	{
-		if (np == 1)
+		if (np < 2)
 		{
-			cout << "At least two process are required\n";
+			cout << "At least three process are required\n";
 			MPI_Finalize ();
 			return 0;
 		}
-		else if (np > 1 )
+		else
 		{
 			cout << "runRenderingAndComposite\n";
 			launchWebSocketServer	( );
