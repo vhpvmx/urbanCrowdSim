@@ -1,11 +1,4 @@
-//
-//										Benjamin Hernandez, PhD. benjamin.hernandez@bsc.es
-//																	   All Rights Reserved
-// 														   Barcelona Supercomputing Center
-//
-//															   See ReadMe.txt for details
-//
-//=======================================================================================
+
 
 #pragma once
 
