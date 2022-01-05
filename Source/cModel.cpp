@@ -1,12 +1,4 @@
 
-//
-//										Benjamin Hernandez, PhD. benjamin.hernandez@bsc.es
-//																	   All Rights Reserved
-// 														   Barcelona Supercomputing Center
-//
-//															   See ReadMe.txt for details
-//
-//=======================================================================================
 
 #include <iostream>
 #include <GL/glew.h>
